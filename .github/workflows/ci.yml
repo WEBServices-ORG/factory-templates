@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  validate-template:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install mise
+        run: brew install mise
+
+      - name: Activate mise
+        shell: bash
+        run: |
+          echo 'eval "$(mise activate bash)"' >> "$GITHUB_ENV"
+
+      - name: Ensure template exists
+        run: |
+          test -d swiftui-macos-app || (echo "Missing swiftui-macos-app template folder" && exit 1)
+
+      - name: Install toolchain (from template)
+        run: |
+          cd swiftui-macos-app
+          mise trust || true
+          mise install
+
+      - name: Generate Xcode project (headless)
+        run: |
+          cd swiftui-macos-app
+          mise exec tuist -- tuist generate
+
+      - name: Run tests (headless)
+        run: |
+          cd swiftui-macos-app
+          # Replace tokens to a real scheme name for CI run
+          APP="TemplateCIApp"
+          perl -pi -e 's/\{\{PRODUCT_NAME\}\}/'"$APP"'/g' Project.swift .github/workflows/ci.yml factory/git-hooks/pre-commit Tests/AppTests/* 2>/dev/null || true
+          mise exec tuist -- tuist generate
+          xcodebuild test -scheme "$APP" -destination "platform=macOS" -quiet
