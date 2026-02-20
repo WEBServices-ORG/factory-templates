@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install mise
+        run: brew install mise
+
+      - name: Activate mise
+        shell: bash
+        run: |
+          echo 'eval "$(mise activate bash)"' >> "$GITHUB_ENV"
+
+      - name: Install toolchain (pinned)
+        run: mise install
+
+      - name: Generate Xcode project
+        run: mise exec tuist -- tuist generate
+
+      - name: SwiftFormat
+        run: mise exec swiftformat -- swiftformat .
+
+      - name: SwiftLint
+        run: mise exec swiftlint -- swiftlint lint --strict
+
+      - name: Tests
+        run: xcodebuild test -scheme {{PRODUCT_NAME}} -destination 'platform=macOS' -quiet
