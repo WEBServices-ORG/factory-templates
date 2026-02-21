@@ -19,6 +19,10 @@ jobs:
           test -d swiftui-macos-app || (echo "Missing swiftui-macos-app template folder" && exit 1)
 
       - name: Install toolchain (from template)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
+          AQUA_GITHUB_TOKEN: ${{ github.token }}
         run: |
           cd swiftui-macos-app
           mise trust || true
