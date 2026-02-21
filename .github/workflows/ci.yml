@@ -14,11 +14,6 @@ jobs:
       - name: Install mise
         run: brew install mise
 
-      - name: Activate mise
-        shell: bash
-        run: |
-          echo 'eval "$(mise activate bash)"' >> "$GITHUB_ENV"
-
       - name: Ensure template exists
         run: |
           test -d swiftui-macos-app || (echo "Missing swiftui-macos-app template folder" && exit 1)
